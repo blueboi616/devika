@@ -1,5 +1,6 @@
 import os
 import json
+import shutil
 import zipfile
 from datetime import datetime
 from typing import Optional
@@ -43,6 +44,18 @@ class ProjectManager:
             if project_state:
                 session.delete(project_state)
                 session.commit()
+
+        base_path = os.path.realpath(self.project_path)
+        project_path = os.path.realpath(self.get_project_path(project))
+        if os.path.commonpath([project_path, base_path]) == base_path:
+            try:
+                if os.path.exists(project_path):
+                    shutil.rmtree(project_path)
+                zip_path = self.get_zip_path(project)
+                if os.path.exists(zip_path):
+                    os.remove(zip_path)
+            except OSError as e:
+                print(f"Warning: could not fully remove project files for '{project}': {e}")
 
     def add_message_to_project(self, project: str, message: dict):
         with Session(self.engine) as session:
